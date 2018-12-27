@@ -44,32 +44,24 @@ class Interpreter(object):
 
 	def get_next_token(self):
 		while self.current_char is not None:
-
 			if self.current_char.isspace():
 				self.skip_whitespace()
 				continue
-
 			if self.current_char.isdigit():
 				return Token(INTEGER, self.integer())
-
 			if self.current_char == '+':
 				self.advance()
 				return Token(PLUS, '+')
-
 			if self.current_char == '-':
 				self.advance()
 				return Token(MINUS, '-')
-				
 			if self.current_char == '*':
 				self.advance()
 				return Token(PROD, '*')
-
 			if self.current_char == '/':
 				self.advance()
 				return Token(DIV, '/')
-
 			self.error()
-
 		return Token(EOF, None)
 
 	def eat(self, token_type):
@@ -85,7 +77,6 @@ class Interpreter(object):
 
 	def expr(self):
 		self.current_token = self.get_next_token()
-
 		result = self.term()
 		while self.current_token.type in (PLUS, MINUS, PROD, DIV):
 			token = self.current_token
@@ -101,10 +92,7 @@ class Interpreter(object):
 			if token.type == DIV:
 				self.eat(DIV)
 				result = result / self.term()
-
 		return result
-
-
 
 def main():
 	while True:
@@ -117,7 +105,6 @@ def main():
 		interpreter = Interpreter(text)
 		result = interpreter.expr()
 		print(result)
-
 
 if __name__ == '__main__':
 	main()

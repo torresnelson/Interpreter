@@ -78,34 +78,32 @@ class Interpreter(object):
 		else:
 			self.error()
 
+	def term(self):
+		token = self.current_token
+		self.eat(INTEGER)
+		return token.value
+
 	def expr(self):
 		self.current_token = self.get_next_token()
 
-		left = self.current_token
-		self.eat(INTEGER)
-
-		op = self.current_token
-		if op.type == PLUS:
-			self.eat(PLUS)
-		if op.type == MINUS:
-			self.eat(MINUS)
-		if op.type == PROD:
-			self.eat(PROD)
-		if op.type == DIV:
-			self.eat(DIV)
-		right = self.current_token
-		self.eat(INTEGER)
-
-		if op.type == PLUS:
-			result = left.value + right.value
-		if op.type == MINUS:
-			result = left.value - right.value	
-		if op.type == PROD:
-			result = left.value * right.value
-		if op.type == DIV:
-			result = left.value / right.value
+		result = self.term()
+		while self.current_token.type in (PLUS, MINUS, PROD, DIV):
+			token = self.current_token
+			if token.type == PLUS:
+				self.eat(PLUS)
+				result = result + self.term()
+			elif token.type == MINUS:
+				self.eat(MINUS)
+				result = result - self.term()
+			if token.type == PROD:
+				self.eat(PROD)
+				result = result * self.term()
+			if token.type == DIV:
+				self.eat(DIV)
+				result = result / self.term()
 
 		return result
+
 
 
 def main():

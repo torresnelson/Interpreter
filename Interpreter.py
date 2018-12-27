@@ -1,120 +1,121 @@
-INTEGER, PLUS, MINUS, PROD, DIV, EOF, SPC = 'INTEGER', 'PLUS', 'MINUS', 'PROD', 'DIV', 'EOF', 'SPC'
+INTEGER, PLUS, MINUS, PROD, DIV, EOF = 'INTEGER', 'PLUS', 'MINUS', 'PROD', 'DIV', 'EOF'
 
 class Token(object):
- 	def __init__(self, type, value):
- 		self.type = type
- 		self.value = value
- 		
- 	def __str__(self):
+	def __init__(self, type, value):
+		self.type = type
+		self.value = value
 
- 		return 'Token({type},{value})'.format(
- 			type=self.type,
- 			value=repr(self.value)
- 		)
+	def __str__(self):
+		return 'Token({type}, {value})'.format(
+			type=self.type,
+			value=repr(self.value)
+		)
 
- 	def __repr__(self):
- 		return self.__str__()
+	def __repr__(self):
+		return self.__str__()
 
 class Interpreter(object):
 	def __init__(self, text):
 		self.text = text
 		self.pos = 0
 		self.current_token = None
+		self.current_char = self.text[self.pos]
 
 	def error(self):
 		raise Exception('Error parsing input')
 
+	def advance(self):
+		self.pos += 1
+		if self.pos > len(self.text) - 1:
+			self.current_char = None
+		else:
+			self.current_char = self.text[self.pos]
+
+	def skip_whitespace(self):
+		while self.current_char is not None and self.current_char.isspace():
+			self.advance()
+
+	def integer(self):
+		result = ''
+		while self.current_char is not None and self.current_char.isdigit():
+			result += self.current_char
+			self.advance()
+		return int(result)
+
 	def get_next_token(self):
-		text = self.text
-		if self.pos > len(text) - 1:
-			return Token(EOF,None)
+		while self.current_char is not None:
 
-		current_char = text[self.pos]
+			if self.current_char.isspace():
+				self.skip_whitespace()
+				continue
 
-		if current_char.isdigit():
-			token = Token(INTEGER, int(current_char))
-			self.pos += 1
-			return token
-			
-		if current_char == '+':
-			token = Token(PLUS, current_char)
-			self.pos += 1
-			return token	
+			if self.current_char.isdigit():
+				return Token(INTEGER, self.integer())
 
-		if current_char == '-':
-			token = Token(MINUS, current_char)
-			self.pos += 1
-			return token
+			if self.current_char == '+':
+				self.advance()
+				return Token(PLUS, '+')
 
-		if current_char == '*':
-			token = Token(PROD, current_char)
-			self.pos += 1
-			return token
+			if self.current_char == '-':
+				self.advance()
+				return Token(MINUS, '-')
+				
+			if self.current_char == '*':
+				self.advance()
+				return Token(PROD, '*')
 
-		if current_char == '/':
-			token = Token(DIV, current_char)
-			self.pos += 1
-			return token
+			if self.current_char == '/':
+				self.advance()
+				return Token(DIV, '/')
 
-		if current_char == ' ':
-			token = Token(SPC, current_char)
-			self.pos += 1
-			return token
+			self.error()
 
-		self.error()
+		return Token(EOF, None)
 
-	def eat(self,token_type):
+	def eat(self, token_type):
 		if self.current_token.type == token_type:
 			self.current_token = self.get_next_token()
-			while (self.current_token.type == 'SPC'):
-				self.current_token = self.get_next_token()
 		else:
 			self.error()
 
 	def expr(self):
 		self.current_token = self.get_next_token()
-		
-		left = self.current_token
-		self.eat('INTEGER')
-		while (self.current_token.type == 'INTEGER'):
-			left.value = (left.value * 10) + self.current_token.value
-			self.eat('INTEGER')
-		
-		op = self.current_token.value
-		if op == '+':
-			self.eat(PLUS)
-		if op == '-':
-			self.eat(MINUS)
-		if op == '*':
-			self.eat(PROD)
-		if op == '/':
-			self.eat(DIV) 
 
+		left = self.current_token
+		self.eat(INTEGER)
+
+		op = self.current_token
+		if op.type == PLUS:
+			self.eat(PLUS)
+		if op.type == MINUS:
+			self.eat(MINUS)
+		if op.type == PROD:
+			self.eat(PROD)
+		if op.type == DIV:
+			self.eat(DIV)
 		right = self.current_token
-		self.eat('INTEGER')
-		while (self.current_token.type == 'INTEGER'):
-			right.value = (10 * right.value) + self.current_token.value
-			self.eat('INTEGER')
-	
-		if op == '+':
+		self.eat(INTEGER)
+
+		if op.type == PLUS:
 			result = left.value + right.value
-		if op == '-':
-			result = left.value - right.value
-		if op == '*':
+		if op.type == MINUS:
+			result = left.value - right.value	
+		if op.type == PROD:
 			result = left.value * right.value
-		if op == '/':
+		if op.type == DIV:
 			result = left.value / right.value
 
-		return int(result)
+		return result
+
 
 def main():
 	while True:
 		try:
-			text = input('calculator> ')
+			text = input('calc> ')
 		except EOFError:
 			break
 		if not text:
-			continue			
+			continue
 		interpreter = Interpreter(text)
 		result = interpreter.expr()
 		print(result)
